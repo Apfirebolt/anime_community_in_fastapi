@@ -98,6 +98,26 @@ def test_get_profile_invalid_token():
     assert response.status_code == 401
 
 
+def test_get_profile_with_token(auth_token):
+    response = client.get(
+        "/api/auth/profile", headers={"Authorization": f"Bearer {auth_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "ash@gmail.com"
+    assert "username" in data
+
+
+def test_get_me_with_token(auth_token):
+    response = client.get(
+        "/api/auth/me", headers={"Authorization": f"Bearer {auth_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "ash@gmail.com"
+    assert "username" in data
+
+
 def test_get_all_users(auth_token):
     response = client.get("/api/auth", headers={"Authorization": f"Bearer {auth_token}"})
     assert response.status_code == 200

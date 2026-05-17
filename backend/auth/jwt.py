@@ -36,7 +36,7 @@ def verify_token(token: str, credentials_exception: HTTPException) -> schema.Tok
     except pyjwt.PyJWTError:
         raise credentials_exception
 
-bearer_scheme = HTTPBearer()
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> schema.TokenData:
@@ -45,6 +45,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_
         detail="Could not validate credentials",
         headers={"Authorization": "Bearer"}
     )
+    if not credentials or not credentials.credentials:
+        raise credentials_exception
     token = credentials.credentials
     return verify_token(token, credentials_exception)
 

@@ -23,4 +23,4 @@ class User(Base):
         self.password = hashing.get_password_hash(password)
 
     def check_password(self, password: str) -> bool:
-        return hashing.verify_password(self.password, password)
+        return hashing.verify_password(password, self.password)
