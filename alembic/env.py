@@ -9,7 +9,7 @@ import os
 
 """Ensure Alembic discovers all SQLAlchemy models."""
 from backend.auth.models import User
-from backend.community.models import Community
+from backend.community.models import Community, Thread
 
 
 # Import and load environment variables

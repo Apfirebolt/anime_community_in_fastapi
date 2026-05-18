@@ -14,6 +14,67 @@ class CommunityOut(BaseModel):
     description: Optional[str]
     anime: Optional[str]
     creator_id: int
+    created_at: Optional[int]
+    updated_at: Optional[int]
+    is_active: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class ThreadCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+
+class ThreadOut(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    community_id: int
+    creator_id: int
+    created_at: Optional[int]
+    updated_at: Optional[int]
+    is_active: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class ThreadUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[int] = None
+
+
+class ThreadCommentCreate(BaseModel):
+    content: str
+
+
+class ThreadCommentOut(BaseModel):
+    id: int
+    thread_id: int
+    user_id: int
+    content: str
+    created_at: Optional[int]
+    updated_at: Optional[int]
+    is_active: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class ModeratorAssign(BaseModel):
+    user_id: int
+
+
+class ModeratorOut(BaseModel):
+    id: int
+    community_id: int
+    user_id: int
+    created_at: Optional[int]
+    updated_at: Optional[int]
+    is_active: Optional[int]
 
     class Config:
         from_attributes = True
