@@ -15,3 +15,15 @@ class Community(Base):
     updated_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
     is_active = Column(Integer, default=1, nullable=False)
     
+
+class Thread(Base):
+    __tablename__ = "thread"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    community_id = Column(Integer, ForeignKey("community.id"), nullable=False)
+    creator_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
+    updated_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
+    is_active = Column(Integer, default=1, nullable=False)

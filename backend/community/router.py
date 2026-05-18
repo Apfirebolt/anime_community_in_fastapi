@@ -32,3 +32,31 @@ async def read_community(community_id: int):
 @router.get("/", response_model=List[schema.CommunityOut])
 async def list_all_communities():
     return await services.list_communities()
+
+
+@router.post("/{community_id}/threads", status_code=status.HTTP_201_CREATED, response_model=schema.ThreadOut)
+async def create_thread(
+    community_id: int,
+    request: schema.ThreadCreate,
+    current_user: auth_schema.TokenData = Depends(get_current_user),
+):
+    try:
+        thread = await services.create_thread(community_id, request, current_user.id)
+        return thread
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create thread")
+
+
+@router.get("/{community_id}/threads", response_model=List[schema.ThreadOut])
+async def list_threads_for_community(community_id: int):
+    return await services.list_threads(community_id)
+
+
+@router.get("/threads/{thread_id}", response_model=schema.ThreadOut)
+async def read_thread(thread_id: int):
+    thread = await services.get_thread(thread_id)
+    if not thread:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found")
+    return thread
