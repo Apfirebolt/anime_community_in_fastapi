@@ -4,6 +4,7 @@ from . import schema
 from . import models
 from backend.db import community_db
 from backend.db import auth_db
+from backend.notification import services as notification_services
 
 
 class CommunityService:
@@ -47,6 +48,16 @@ class CommunityService:
         if not thread:
             raise ValueError("Thread not found")
         comment = await community_db.create_thread_comment(thread_id, user_id, request.content.strip())
+        if thread.creator_id != user_id:
+            actor = await auth_db.get_user_by_id(user_id)
+            actor_name = actor.username if actor else "Someone"
+            await notification_services.notify_thread_owner_of_new_comment(
+                thread_owner_id=thread.creator_id,
+                actor_id=user_id,
+                thread_id=thread_id,
+                actor_name=actor_name,
+                comment_content=request.content.strip(),
+            )
         return comment
 
     async def get_thread_comment(self, comment_id: int) -> Optional[models.ThreadComment]:
