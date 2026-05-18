@@ -105,6 +105,46 @@ def _list_threads_by_community_sync(community_id: int) -> List[models.Thread]:
         db.close()
 
 
+def _create_thread_comment_sync(thread_id: int, user_id: int, content: str) -> models.ThreadComment:
+    db: Session = sync_db.SessionLocal()
+    try:
+        now = int(datetime.utcnow().timestamp())
+        comment = models.ThreadComment(
+            thread_id=thread_id,
+            user_id=user_id,
+            content=content,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(comment)
+        db.commit()
+        db.refresh(comment)
+        return comment
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def _get_thread_comment_sync(comment_id: int) -> Optional[models.ThreadComment]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.ThreadComment).where(models.ThreadComment.id == comment_id)
+        return db.execute(stmt).scalars().first()
+    finally:
+        db.close()
+
+
+def _list_thread_comments_sync(thread_id: int) -> List[models.ThreadComment]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.ThreadComment).where(models.ThreadComment.thread_id == thread_id)
+        return db.execute(stmt).scalars().all()
+    finally:
+        db.close()
+
+
 def _get_community_moderator_by_id_sync(moderator_id: int) -> Optional[models.CommunityModerator]:
     db: Session = sync_db.SessionLocal()
     try:
@@ -257,6 +297,18 @@ async def delete_thread(thread_id: int) -> bool:
 
 async def list_threads_by_community(community_id: int) -> List[models.Thread]:
     return await run_in_threadpool(_list_threads_by_community_sync, community_id)
+
+
+async def create_thread_comment(thread_id: int, user_id: int, content: str) -> models.ThreadComment:
+    return await run_in_threadpool(_create_thread_comment_sync, thread_id, user_id, content)
+
+
+async def get_thread_comment(comment_id: int) -> Optional[models.ThreadComment]:
+    return await run_in_threadpool(_get_thread_comment_sync, comment_id)
+
+
+async def list_thread_comments(thread_id: int) -> List[models.ThreadComment]:
+    return await run_in_threadpool(_list_thread_comments_sync, thread_id)
 
 
 async def get_community_moderator_by_id(moderator_id: int) -> Optional[models.CommunityModerator]:

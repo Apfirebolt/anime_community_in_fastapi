@@ -62,6 +62,34 @@ async def read_thread(thread_id: int):
     return thread
 
 
+@router.post("/threads/{thread_id}/comments", status_code=status.HTTP_201_CREATED, response_model=schema.ThreadCommentOut)
+async def create_thread_comment(
+    thread_id: int,
+    request: schema.ThreadCommentCreate,
+    current_user: auth_schema.TokenData = Depends(get_current_user),
+):
+    try:
+        comment = await services.create_thread_comment(thread_id, request, current_user.id)
+        return comment
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create comment")
+
+
+@router.get("/threads/{thread_id}/comments", response_model=List[schema.ThreadCommentOut])
+async def list_thread_comments(thread_id: int):
+    return await services.list_thread_comments(thread_id)
+
+
+@router.get("/threads/{thread_id}/comments/{comment_id}", response_model=schema.ThreadCommentOut)
+async def read_thread_comment(thread_id: int, comment_id: int):
+    comment = await services.get_thread_comment(comment_id)
+    if not comment or comment.thread_id != thread_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+    return comment
+
+
 @router.put("/threads/{thread_id}", response_model=schema.ThreadOut)
 async def update_thread(
     thread_id: int,

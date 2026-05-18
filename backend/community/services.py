@@ -40,6 +40,21 @@ class CommunityService:
         )
         return thread
 
+    async def create_thread_comment(self, thread_id: int, request: schema.ThreadCommentCreate, user_id: int) -> models.ThreadComment:
+        if not request.content or not request.content.strip():
+            raise ValueError("Comment content is required")
+        thread = await community_db.get_thread(thread_id)
+        if not thread:
+            raise ValueError("Thread not found")
+        comment = await community_db.create_thread_comment(thread_id, user_id, request.content.strip())
+        return comment
+
+    async def get_thread_comment(self, comment_id: int) -> Optional[models.ThreadComment]:
+        return await community_db.get_thread_comment(comment_id)
+
+    async def list_thread_comments(self, thread_id: int) -> List[models.ThreadComment]:
+        return await community_db.list_thread_comments(thread_id)
+
     async def update_thread(self, thread_id: int, request: schema.ThreadUpdate, current_user_id: int) -> models.Thread:
         thread = await community_db.get_thread(thread_id)
         if not thread:
@@ -120,6 +135,18 @@ async def create_thread(community_id: int, request: schema.ThreadCreate, creator
 
 async def get_thread(thread_id: int) -> Optional[models.Thread]:
     return await community_service.get_thread(thread_id)
+
+
+async def create_thread_comment(thread_id: int, request: schema.ThreadCommentCreate, user_id: int) -> models.ThreadComment:
+    return await community_service.create_thread_comment(thread_id, request, user_id)
+
+
+async def get_thread_comment(comment_id: int) -> Optional[models.ThreadComment]:
+    return await community_service.get_thread_comment(comment_id)
+
+
+async def list_thread_comments(thread_id: int) -> List[models.ThreadComment]:
+    return await community_service.list_thread_comments(thread_id)
 
 
 async def update_thread(thread_id: int, request: schema.ThreadUpdate, current_user_id: int) -> models.Thread:
