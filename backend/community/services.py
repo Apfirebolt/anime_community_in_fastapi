@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime
 
 from . import schema
 from . import models
@@ -39,6 +40,30 @@ class CommunityService:
         )
         return thread
 
+    async def update_thread(self, thread_id: int, request: schema.ThreadUpdate, current_user_id: int) -> models.Thread:
+        thread = await community_db.get_thread(thread_id)
+        if not thread:
+            raise ValueError("Thread not found")
+        if thread.creator_id != current_user_id:
+            raise PermissionError("Not authorized to update thread")
+        if request.title is not None and not request.title.strip():
+            raise ValueError("Thread title cannot be empty")
+        updated_thread = await community_db.update_thread(
+            thread_id,
+            title=request.title.strip() if request.title is not None else None,
+            description=request.description,
+            is_active=request.is_active,
+        )
+        return updated_thread
+
+    async def delete_thread(self, thread_id: int, current_user_id: int) -> None:
+        thread = await community_db.get_thread(thread_id)
+        if not thread:
+            raise ValueError("Thread not found")
+        if thread.creator_id != current_user_id:
+            raise PermissionError("Not authorized to delete thread")
+        await community_db.delete_thread(thread_id)
+
     async def get_thread(self, thread_id: int) -> Optional[models.Thread]:
         return await community_db.get_thread(thread_id)
 
@@ -67,6 +92,14 @@ async def create_thread(community_id: int, request: schema.ThreadCreate, creator
 
 async def get_thread(thread_id: int) -> Optional[models.Thread]:
     return await community_service.get_thread(thread_id)
+
+
+async def update_thread(thread_id: int, request: schema.ThreadUpdate, current_user_id: int) -> models.Thread:
+    return await community_service.update_thread(thread_id, request, current_user_id)
+
+
+async def delete_thread(thread_id: int, current_user_id: int) -> None:
+    return await community_service.delete_thread(thread_id, current_user_id)
 
 
 async def list_threads(community_id: Optional[int] = None) -> List[models.Thread]:

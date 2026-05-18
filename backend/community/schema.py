@@ -39,3 +39,9 @@ class ThreadOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ThreadUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[int] = None

@@ -60,3 +60,32 @@ async def read_thread(thread_id: int):
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found")
     return thread
+
+
+@router.put("/threads/{thread_id}", response_model=schema.ThreadOut)
+async def update_thread(
+    thread_id: int,
+    request: schema.ThreadUpdate,
+    current_user: auth_schema.TokenData = Depends(get_current_user),
+):
+    try:
+        thread = await services.update_thread(thread_id, request, current_user.id)
+        return thread
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update thread")
+
+
+@router.delete("/threads/{thread_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_thread(thread_id: int, current_user: auth_schema.TokenData = Depends(get_current_user)):
+    try:
+        await services.delete_thread(thread_id, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete thread")

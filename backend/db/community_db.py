@@ -105,6 +105,47 @@ def _list_threads_by_community_sync(community_id: int) -> List[models.Thread]:
         db.close()
 
 
+def _update_thread_sync(thread_id: int, title: Optional[str], description: Optional[str], is_active: Optional[int]) -> Optional[models.Thread]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.Thread).where(models.Thread.id == thread_id)
+        thread = db.execute(stmt).scalars().first()
+        if not thread:
+            return None
+        if title is not None:
+            thread.title = title
+        if description is not None:
+            thread.description = description
+        if is_active is not None:
+            thread.is_active = is_active
+        thread.updated_at = int(datetime.utcnow().timestamp())
+        db.commit()
+        db.refresh(thread)
+        return thread
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def _delete_thread_sync(thread_id: int) -> bool:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.Thread).where(models.Thread.id == thread_id)
+        thread = db.execute(stmt).scalars().first()
+        if not thread:
+            return False
+        db.delete(thread)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 async def create_community(name: str, description: str, anime: str, creator_id: int) -> models.Community:
     return await run_in_threadpool(_create_community_sync, name, description, anime, creator_id)
 
@@ -127,6 +168,14 @@ async def get_thread(thread_id: int) -> Optional[models.Thread]:
 
 async def list_threads() -> List[models.Thread]:
     return await run_in_threadpool(_list_threads_sync)
+
+
+async def update_thread(thread_id: int, title: Optional[str], description: Optional[str], is_active: Optional[int]) -> Optional[models.Thread]:
+    return await run_in_threadpool(_update_thread_sync, thread_id, title, description, is_active)
+
+
+async def delete_thread(thread_id: int) -> bool:
+    return await run_in_threadpool(_delete_thread_sync, thread_id)
 
 
 async def list_threads_by_community(community_id: int) -> List[models.Thread]:
