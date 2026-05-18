@@ -1,9 +1,9 @@
 from typing import List, Optional
-from datetime import datetime
 
 from . import schema
 from . import models
 from backend.db import community_db
+from backend.db import auth_db
 
 
 class CommunityService:
@@ -44,7 +44,8 @@ class CommunityService:
         thread = await community_db.get_thread(thread_id)
         if not thread:
             raise ValueError("Thread not found")
-        if thread.creator_id != current_user_id:
+        is_moderator = await community_db.is_user_moderator(current_user_id, thread.community_id)
+        if thread.creator_id != current_user_id and not is_moderator:
             raise PermissionError("Not authorized to update thread")
         if request.title is not None and not request.title.strip():
             raise ValueError("Thread title cannot be empty")
@@ -60,9 +61,36 @@ class CommunityService:
         thread = await community_db.get_thread(thread_id)
         if not thread:
             raise ValueError("Thread not found")
-        if thread.creator_id != current_user_id:
+        is_moderator = await community_db.is_user_moderator(current_user_id, thread.community_id)
+        if thread.creator_id != current_user_id and not is_moderator:
             raise PermissionError("Not authorized to delete thread")
         await community_db.delete_thread(thread_id)
+
+    async def assign_moderator(self, community_id: int, user_id: int, current_user_id: int) -> models.CommunityModerator:
+        community = await community_db.get_community(community_id)
+        if not community:
+            raise ValueError("Community not found")
+        if community.creator_id != current_user_id:
+            raise PermissionError("Only community creator can assign moderators")
+        user = await auth_db.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+        moderator = await community_db.create_community_moderator(community_id, user_id)
+        return moderator
+
+    async def list_moderators(self, community_id: int) -> List[models.CommunityModerator]:
+        return await community_db.list_community_moderators(community_id)
+
+    async def remove_moderator(self, community_id: int, moderator_id: int, current_user_id: int) -> None:
+        community = await community_db.get_community(community_id)
+        if not community:
+            raise ValueError("Community not found")
+        if community.creator_id != current_user_id:
+            raise PermissionError("Only community creator can remove moderators")
+        moderator = await community_db.get_community_moderator_by_id(moderator_id)
+        if not moderator or moderator.community_id != community_id:
+            raise ValueError("Moderator assignment not found")
+        await community_db.delete_community_moderator(moderator_id)
 
     async def get_thread(self, thread_id: int) -> Optional[models.Thread]:
         return await community_db.get_thread(thread_id)
@@ -100,6 +128,18 @@ async def update_thread(thread_id: int, request: schema.ThreadUpdate, current_us
 
 async def delete_thread(thread_id: int, current_user_id: int) -> None:
     return await community_service.delete_thread(thread_id, current_user_id)
+
+
+async def assign_moderator(community_id: int, user_id: int, current_user_id: int) -> models.CommunityModerator:
+    return await community_service.assign_moderator(community_id, user_id, current_user_id)
+
+
+async def list_moderators(community_id: int) -> List[models.CommunityModerator]:
+    return await community_service.list_moderators(community_id)
+
+
+async def remove_moderator(community_id: int, moderator_id: int, current_user_id: int) -> None:
+    return await community_service.remove_moderator(community_id, moderator_id, current_user_id)
 
 
 async def list_threads(community_id: Optional[int] = None) -> List[models.Thread]:

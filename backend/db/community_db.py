@@ -105,6 +105,83 @@ def _list_threads_by_community_sync(community_id: int) -> List[models.Thread]:
         db.close()
 
 
+def _get_community_moderator_by_id_sync(moderator_id: int) -> Optional[models.CommunityModerator]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.CommunityModerator).where(models.CommunityModerator.id == moderator_id)
+        return db.execute(stmt).scalars().first()
+    finally:
+        db.close()
+
+
+def _list_community_moderators_sync(community_id: int) -> List[models.CommunityModerator]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.CommunityModerator).where(models.CommunityModerator.community_id == community_id)
+        return db.execute(stmt).scalars().all()
+    finally:
+        db.close()
+
+
+def _create_community_moderator_sync(community_id: int, user_id: int) -> models.CommunityModerator:
+    db: Session = sync_db.SessionLocal()
+    try:
+        existing = db.execute(
+            select(models.CommunityModerator).where(
+                models.CommunityModerator.community_id == community_id,
+                models.CommunityModerator.user_id == user_id,
+            )
+        ).scalars().first()
+        if existing:
+            return existing
+        now = int(datetime.utcnow().timestamp())
+        moderator = models.CommunityModerator(
+            community_id=community_id,
+            user_id=user_id,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(moderator)
+        db.commit()
+        db.refresh(moderator)
+        return moderator
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def _delete_community_moderator_sync(moderator_id: int) -> bool:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.CommunityModerator).where(models.CommunityModerator.id == moderator_id)
+        moderator = db.execute(stmt).scalars().first()
+        if not moderator:
+            return False
+        db.delete(moderator)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def _is_user_moderator_sync(user_id: int, community_id: int) -> bool:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.CommunityModerator).where(
+            models.CommunityModerator.user_id == user_id,
+            models.CommunityModerator.community_id == community_id,
+            models.CommunityModerator.is_active == 1,
+        )
+        return db.execute(stmt).scalars().first() is not None
+    finally:
+        db.close()
+
+
 def _update_thread_sync(thread_id: int, title: Optional[str], description: Optional[str], is_active: Optional[int]) -> Optional[models.Thread]:
     db: Session = sync_db.SessionLocal()
     try:
@@ -180,3 +257,23 @@ async def delete_thread(thread_id: int) -> bool:
 
 async def list_threads_by_community(community_id: int) -> List[models.Thread]:
     return await run_in_threadpool(_list_threads_by_community_sync, community_id)
+
+
+async def get_community_moderator_by_id(moderator_id: int) -> Optional[models.CommunityModerator]:
+    return await run_in_threadpool(_get_community_moderator_by_id_sync, moderator_id)
+
+
+async def list_community_moderators(community_id: int) -> List[models.CommunityModerator]:
+    return await run_in_threadpool(_list_community_moderators_sync, community_id)
+
+
+async def create_community_moderator(community_id: int, user_id: int) -> models.CommunityModerator:
+    return await run_in_threadpool(_create_community_moderator_sync, community_id, user_id)
+
+
+async def delete_community_moderator(moderator_id: int) -> bool:
+    return await run_in_threadpool(_delete_community_moderator_sync, moderator_id)
+
+
+async def is_user_moderator(user_id: int, community_id: int) -> bool:
+    return await run_in_threadpool(_is_user_moderator_sync, user_id, community_id)

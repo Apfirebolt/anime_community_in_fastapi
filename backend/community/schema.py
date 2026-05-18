@@ -45,3 +45,19 @@ class ThreadUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     is_active: Optional[int] = None
+
+
+class ModeratorAssign(BaseModel):
+    user_id: int
+
+
+class ModeratorOut(BaseModel):
+    id: int
+    community_id: int
+    user_id: int
+    created_at: Optional[int]
+    updated_at: Optional[int]
+    is_active: Optional[int]
+
+    class Config:
+        from_attributes = True
