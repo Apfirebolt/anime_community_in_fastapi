@@ -1,0 +1,16 @@
+--- a/main.py
++++ b/main.py
+@@ -4,6 +4,7 @@ import uvicorn
+ from backend.auth import router as auth_router
+ import backend.auth_db as auth_db
+ from backend.community import router as community_router
++from backend.message import router as message_router
+ 
+ app = FastAPI(title="Fast API Anime Community App",
+@@ -22,6 +23,7 @@ app.add_middleware(
+ 
+ app.include_router(auth_router.router)
+ app.include_router(community_router.router)
++app.include_router(message_router.router)
+ 
+ 
