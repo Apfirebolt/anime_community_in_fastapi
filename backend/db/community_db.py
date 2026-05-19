@@ -145,6 +145,92 @@ def _list_thread_comments_sync(thread_id: int) -> List[models.ThreadComment]:
         db.close()
 
 
+def _get_thread_like_sync(thread_id: int, user_id: int) -> Optional[models.ThreadLike]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.ThreadLike).where(
+            models.ThreadLike.thread_id == thread_id,
+            models.ThreadLike.user_id == user_id,
+        )
+        return db.execute(stmt).scalars().first()
+    finally:
+        db.close()
+
+
+def _set_thread_like_sync(thread_id: int, user_id: int, is_liked: int) -> models.ThreadLike:
+    db: Session = sync_db.SessionLocal()
+    try:
+        now = int(datetime.utcnow().timestamp())
+        stmt = select(models.ThreadLike).where(
+            models.ThreadLike.thread_id == thread_id,
+            models.ThreadLike.user_id == user_id,
+        )
+        thread_like = db.execute(stmt).scalars().first()
+        if thread_like:
+            thread_like.is_liked = is_liked
+            thread_like.updated_at = now
+        else:
+            thread_like = models.ThreadLike(
+                thread_id=thread_id,
+                user_id=user_id,
+                is_liked=is_liked,
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(thread_like)
+        db.commit()
+        db.refresh(thread_like)
+        return thread_like
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def _get_thread_comment_like_sync(comment_id: int, user_id: int) -> Optional[models.ThreadCommentLike]:
+    db: Session = sync_db.SessionLocal()
+    try:
+        stmt = select(models.ThreadCommentLike).where(
+            models.ThreadCommentLike.comment_id == comment_id,
+            models.ThreadCommentLike.user_id == user_id,
+        )
+        return db.execute(stmt).scalars().first()
+    finally:
+        db.close()
+
+
+def _set_thread_comment_like_sync(comment_id: int, user_id: int, is_liked: int) -> models.ThreadCommentLike:
+    db: Session = sync_db.SessionLocal()
+    try:
+        now = int(datetime.utcnow().timestamp())
+        stmt = select(models.ThreadCommentLike).where(
+            models.ThreadCommentLike.comment_id == comment_id,
+            models.ThreadCommentLike.user_id == user_id,
+        )
+        comment_like = db.execute(stmt).scalars().first()
+        if comment_like:
+            comment_like.is_liked = is_liked
+            comment_like.updated_at = now
+        else:
+            comment_like = models.ThreadCommentLike(
+                comment_id=comment_id,
+                user_id=user_id,
+                is_liked=is_liked,
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(comment_like)
+        db.commit()
+        db.refresh(comment_like)
+        return comment_like
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 def _get_community_moderator_by_id_sync(moderator_id: int) -> Optional[models.CommunityModerator]:
     db: Session = sync_db.SessionLocal()
     try:
@@ -309,6 +395,22 @@ async def get_thread_comment(comment_id: int) -> Optional[models.ThreadComment]:
 
 async def list_thread_comments(thread_id: int) -> List[models.ThreadComment]:
     return await run_in_threadpool(_list_thread_comments_sync, thread_id)
+
+
+async def get_thread_like(thread_id: int, user_id: int) -> Optional[models.ThreadLike]:
+    return await run_in_threadpool(_get_thread_like_sync, thread_id, user_id)
+
+
+async def set_thread_like(thread_id: int, user_id: int, is_liked: int) -> models.ThreadLike:
+    return await run_in_threadpool(_set_thread_like_sync, thread_id, user_id, is_liked)
+
+
+async def get_thread_comment_like(comment_id: int, user_id: int) -> Optional[models.ThreadCommentLike]:
+    return await run_in_threadpool(_get_thread_comment_like_sync, comment_id, user_id)
+
+
+async def set_thread_comment_like(comment_id: int, user_id: int, is_liked: int) -> models.ThreadCommentLike:
+    return await run_in_threadpool(_set_thread_comment_like_sync, comment_id, user_id, is_liked)
 
 
 async def get_community_moderator_by_id(moderator_id: int) -> Optional[models.CommunityModerator]:

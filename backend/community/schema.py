@@ -64,6 +64,30 @@ class ThreadCommentOut(BaseModel):
         from_attributes = True
 
 
+class ThreadLikeOut(BaseModel):
+    id: int
+    thread_id: int
+    user_id: int
+    is_liked: Optional[int]
+    created_at: Optional[int]
+    updated_at: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class ThreadCommentLikeOut(BaseModel):
+    id: int
+    comment_id: int
+    user_id: int
+    is_liked: Optional[int]
+    created_at: Optional[int]
+    updated_at: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
 class ModeratorAssign(BaseModel):
     user_id: int
 

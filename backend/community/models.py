@@ -50,4 +50,25 @@ class ThreadComment(Base):
     created_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
     updated_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
     is_active = Column(Integer, default=1, nullable=False)
-        
+
+
+class ThreadCommentLike(Base):
+    __tablename__ = "thread_comment_like"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    comment_id = Column(Integer, ForeignKey("thread_comment.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
+    updated_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
+    is_liked = Column(Integer, default=1, nullable=False)
+
+
+class ThreadLike(Base):
+    __tablename__ = "thread_like"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    thread_id = Column(Integer, ForeignKey("thread.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
+    updated_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()), nullable=False)
+    is_liked = Column(Integer, default=1, nullable=False)

@@ -9,7 +9,7 @@ import os
 
 """Ensure Alembic discovers all SQLAlchemy models."""
 from backend.auth.models import User
-from backend.community.models import Community, Thread
+from backend.community.models import Community, Thread, ThreadComment, ThreadCommentLike
 from backend.notification.models import Notification
 from backend.message.models import Message
 

@@ -60,6 +60,30 @@ class CommunityService:
             )
         return comment
 
+    async def like_thread(self, thread_id: int, user_id: int) -> models.ThreadLike:
+        thread = await community_db.get_thread(thread_id)
+        if not thread:
+            raise ValueError("Thread not found")
+        return await community_db.set_thread_like(thread_id, user_id, 1)
+
+    async def unlike_thread(self, thread_id: int, user_id: int) -> None:
+        thread = await community_db.get_thread(thread_id)
+        if not thread:
+            raise ValueError("Thread not found")
+        await community_db.set_thread_like(thread_id, user_id, 0)
+
+    async def like_thread_comment(self, thread_id: int, comment_id: int, user_id: int) -> models.ThreadCommentLike:
+        comment = await community_db.get_thread_comment(comment_id)
+        if not comment or comment.thread_id != thread_id:
+            raise ValueError("Comment not found")
+        return await community_db.set_thread_comment_like(comment_id, user_id, 1)
+
+    async def unlike_thread_comment(self, thread_id: int, comment_id: int, user_id: int) -> None:
+        comment = await community_db.get_thread_comment(comment_id)
+        if not comment or comment.thread_id != thread_id:
+            raise ValueError("Comment not found")
+        await community_db.set_thread_comment_like(comment_id, user_id, 0)
+
     async def get_thread_comment(self, comment_id: int) -> Optional[models.ThreadComment]:
         return await community_db.get_thread_comment(comment_id)
 
@@ -158,6 +182,22 @@ async def get_thread_comment(comment_id: int) -> Optional[models.ThreadComment]:
 
 async def list_thread_comments(thread_id: int) -> List[models.ThreadComment]:
     return await community_service.list_thread_comments(thread_id)
+
+
+async def like_thread(thread_id: int, user_id: int) -> models.ThreadLike:
+    return await community_service.like_thread(thread_id, user_id)
+
+
+async def unlike_thread(thread_id: int, user_id: int) -> None:
+    return await community_service.unlike_thread(thread_id, user_id)
+
+
+async def like_thread_comment(thread_id: int, comment_id: int, user_id: int) -> models.ThreadCommentLike:
+    return await community_service.like_thread_comment(thread_id, comment_id, user_id)
+
+
+async def unlike_thread_comment(thread_id: int, comment_id: int, user_id: int) -> None:
+    return await community_service.unlike_thread_comment(thread_id, comment_id, user_id)
 
 
 async def update_thread(thread_id: int, request: schema.ThreadUpdate, current_user_id: int) -> models.Thread:
