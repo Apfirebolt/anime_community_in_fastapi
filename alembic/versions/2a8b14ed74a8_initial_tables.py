@@ -1,8 +1,8 @@
 """initial tables
 
-Revision ID: 5d37b7993b20
+Revision ID: 2a8b14ed74a8
 Revises: 
-Create Date: 2026-05-19 05:48:02.745474
+Create Date: 2026-05-19 06:14:15.320169
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5d37b7993b20'
+revision: str = '2a8b14ed74a8'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -42,6 +42,19 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['creator_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
+    )
+    op.create_table('message',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('sender_id', sa.Integer(), nullable=False),
+    sa.Column('receiver_id', sa.Integer(), nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('is_read', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.Integer(), nullable=False),
+    sa.Column('updated_at', sa.Integer(), nullable=False),
+    sa.Column('is_active', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['receiver_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['sender_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('notification',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -119,6 +132,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_notification_created_at'), table_name='notification')
     op.drop_index(op.f('ix_notification_actor_id'), table_name='notification')
     op.drop_table('notification')
+    op.drop_table('message')
     op.drop_table('community')
     op.drop_table('user')
     # ### end Alembic commands ###

@@ -11,6 +11,7 @@ import os
 from backend.auth.models import User
 from backend.community.models import Community, Thread
 from backend.notification.models import Notification
+from backend.message.models import Message
 
 
 # Import and load environment variables
